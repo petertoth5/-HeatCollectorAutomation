@@ -1,0 +1,1 @@
+value_template: “{{ states('sensor.temperatureroofsensor') | float - states('sensor.temperaturetanksensor') | float }}”

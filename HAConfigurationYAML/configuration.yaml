@@ -1,0 +1,35 @@
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+sonos:
+  media_player:
+    hosts:
+      - 192.168.1.223
+
+mqtt:
+  sensor:
+    - name: "TemperatureTankSensor"
+      state_topic: "TemperatureTank"
+      device_class: temperature
+      unit_of_measurement: "C"
+    - name: "TemperatureRoofSensor"
+      state_topic: "TemperatureRoof"
+      device_class: temperature
+      unit_of_measurement: "C"
+
+sensor:
+  - platform: template
+    sensors:
+      suncollector_temperature_difference:
+        friendly_name: "Temperature Difference between roof and tank"
+        device_class: temperature
+        unit_of_measurement: "C"
+        value_template: "{{ states('sensor.temperatureroofsensor') | float - states('sensor.temperaturetanksensor') | float }}"
