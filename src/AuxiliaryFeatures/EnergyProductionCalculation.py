@@ -26,4 +26,10 @@ def calculate_energy(volume_liters, temp_initial, temp_final, time_seconds):
     # Calculate the power consumption (P = Q / t)
     power_watts = heat_energy_joules / time_seconds
 
-    return power_watts
+    if (power_watts > 0):
+
+        return power_watts
+    
+    else:
+        
+        return 0
