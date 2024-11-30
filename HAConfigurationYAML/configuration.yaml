@@ -24,6 +24,10 @@ mqtt:
       state_topic: "TemperatureRoof"
       device_class: temperature
       unit_of_measurement: "C"
+    - name: "SunCollectorPowerSensor"
+      state_topic: "SunCollectorPower"
+      device_class: energy
+      unit_of_measurement: "W"
 
 sensor:
   - platform: template
@@ -33,3 +37,11 @@ sensor:
         device_class: temperature
         unit_of_measurement: "C"
         value_template: "{{ states('sensor.temperatureroofsensor') | float - states('sensor.temperaturetanksensor') | float }}"
+
+  - platform: integration
+    source: sensor.suncollectorpowersensor
+    name: suncollector_energy_produced
+    unit_prefix: k
+    round: 2
+    max_sub_interval:
+      minutes: 5
