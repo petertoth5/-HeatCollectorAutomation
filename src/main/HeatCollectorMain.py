@@ -37,12 +37,16 @@ MQTT_KEEPALIVE_INTERVAL = 45
 MQTT_ROOFTEMP_TOPIC = "TemperatureRoof"
 MQTT_TANKTEMP_TOPIC = "TemperatureTank"
 MQTT_SUNCOLLECTOR_POWER_TOPIC = "SunCollectorPower"
-WATER_VOLUME = 300
+WATER_VOLUME = 30
+INTEGRATION_TIME_SECONDS = 300
 
 # Global variables for temperatures tobe able to pass them to scheduled job.
 TankTempInit = 0
 TankTempEnd = 0
 PowerCalculationInitialized = False
+
+TankTemp = 0
+RoofTemp = 0
 
 # Define on_connect event Handler
 def on_connect(mosq, obj, rc):
@@ -52,19 +56,20 @@ def on_connect(mosq, obj, rc):
 def on_publish(client, userdata, mid):
 	print ("Message Published...")
 
-def power_calc_job(water_volume, tank_temp, time_seconds, mqttc):
+def power_calc_job(mqttc):
 
     global TankTempInit, TankTempEnd, PowerCalculationInitialized
 
     if (PowerCalculationInitialized == False):
-        TankTempInit                = tank_temp
-        TankTempEnd                 = tank_temp
+        TankTempInit                = TankTemp
+        TankTempEnd                 = TankTemp
         PowerCalculationInitialized = True
     else:
         TankTempInit    = TankTempEnd
-        TankTempEnd     = tank_temp
+        TankTempEnd     = TankTemp
 
-    power_generation = EnergyProductionCalculation.calculate_energy(water_volume, TankTempInit, TankTempEnd, time_seconds)
+    power_generation = EnergyProductionCalculation.calculate_energy(WATER_VOLUME, TankTempInit, TankTempEnd, INTEGRATION_TIME_SECONDS)
+    
     # Publish message to MQTT Topic 
     mqttc.publish(MQTT_SUNCOLLECTOR_POWER_TOPIC, power_generation)
 
@@ -87,8 +92,8 @@ def main():
     Main program function
     '''
     
-    TankTemp = 0
-    RoofTemp = 0
+    global TankTemp
+    global RoofTemp
 
     # Initiate MQTT Client
     client_id = f'python-mqtt-{random.randint(0, 1000)}'
@@ -101,7 +106,7 @@ def main():
     # Connect with MQTT Broker
     mqttc.connect(MQTT_BROKER, MQTT_PORT, MQTT_KEEPALIVE_INTERVAL) 
 
-    schedule.every(5).minutes.do(power_calc_job, WATER_VOLUME, TankTemp, 300, mqttc)
+    schedule.every(INTEGRATION_TIME_SECONDS).seconds.do(power_calc_job, mqttc)
 
     # create an instance of the ADC DAC Pi with a DAC gain set to 1
     adcdac = ADCHandler.initADC()
