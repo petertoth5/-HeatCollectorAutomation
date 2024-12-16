@@ -44,6 +44,7 @@ INTEGRATION_TIME_SECONDS = 300
 TankTempInit = 0
 TankTempEnd = 0
 PowerCalculationInitialized = False
+SunCollectorGenerating = False
 
 TankTemp = 0
 RoofTemp = 0
@@ -58,7 +59,7 @@ def on_publish(client, userdata, mid):
 
 def power_calc_job(mqttc):
 
-    global TankTempInit, TankTempEnd, PowerCalculationInitialized
+    global TankTempInit, TankTempEnd, PowerCalculationInitialized, SunCollectorGenerating
 
     if (PowerCalculationInitialized == False):
         TankTempInit                = TankTemp
@@ -68,7 +69,7 @@ def power_calc_job(mqttc):
         TankTempInit    = TankTempEnd
         TankTempEnd     = TankTemp
 
-    power_generation = EnergyProductionCalculation.calculate_energy(WATER_VOLUME, TankTempInit, TankTempEnd, INTEGRATION_TIME_SECONDS)
+    power_generation = EnergyProductionCalculation.calculate_energy(WATER_VOLUME, TankTempInit, TankTempEnd, INTEGRATION_TIME_SECONDS, SunCollectorGenerating)
     
     # Publish message to MQTT Topic 
     mqttc.publish(MQTT_SUNCOLLECTOR_POWER_TOPIC, power_generation)
@@ -94,6 +95,7 @@ def main():
     
     global TankTemp
     global RoofTemp
+    global SunCollectorGenerating
 
     # Initiate MQTT Client
     client_id = f'python-mqtt-{random.randint(0, 1000)}'
@@ -173,7 +175,10 @@ def main():
                 # Publish message to MQTT Topic 
                 mqttc.publish(MQTT_TANKTEMP_TOPIC, TankTemp)
 
-                RelayHandling.temperature_control(RoofTemp, TankTemp, mqttc)
+                if "Relay ON" == RelayHandling.temperature_control(RoofTemp, TankTemp, mqttc):
+                    SunCollectorGenerating = True
+                else:
+                    SunCollectorGenerating = False
 
                 schedule.run_pending()
                     

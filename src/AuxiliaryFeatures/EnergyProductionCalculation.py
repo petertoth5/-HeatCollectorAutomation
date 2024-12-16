@@ -1,4 +1,4 @@
-def calculate_energy(volume_liters, temp_initial, temp_final, time_seconds):
+def calculate_energy(volume_liters, temp_initial, temp_final, time_seconds, SunCollectorGenerating):
     """
     Calculate the power consumption of heating water.
 
@@ -26,7 +26,7 @@ def calculate_energy(volume_liters, temp_initial, temp_final, time_seconds):
     # Calculate the power consumption (P = Q / t)
     power_watts = heat_energy_joules / time_seconds
 
-    if (power_watts > 0):
+    if (power_watts > 0 and SunCollectorGenerating == True):
 
         return power_watts
     
