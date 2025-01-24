@@ -29,6 +29,7 @@ from TemperatureSensing import VoltageToTempConverter
 from TemperatureSensing import TemperatureFilter
 from RelayHandling import RelayHandling
 from AuxiliaryFeatures import EnergyProductionCalculation
+from AuxiliaryFeatures import OffsetCalculationAndStorage
 
 # Define Variables
 MQTT_BROKER = "192.168.1.100"
@@ -48,6 +49,9 @@ SunCollectorGenerating = False
 
 TankTemp = 0
 RoofTemp = 0
+
+TankOffset = OffsetCalculationAndStorage.read_and_convert("TankOffset.txt")
+RoofOffset = OffsetCalculationAndStorage.read_and_convert("RoofOffset.txt")
 
 # Define on_connect event Handler
 def on_connect(mosq, obj, rc):
@@ -96,6 +100,8 @@ def main():
     global TankTemp
     global RoofTemp
     global SunCollectorGenerating
+    global TankOffset
+    global RoofOffset
 
     # Initiate MQTT Client
     client_id = f'python-mqtt-{random.randint(0, 1000)}'
@@ -127,9 +133,9 @@ def main():
         for x in range(100):
             
             uInRoof = ADCHandler.readADCChannelSingle(adcdac,1)
-            tempRoof = VoltageToTempConverter.convertADCMeasurementToTemperature(uInRoof)
+            tempRoof = VoltageToTempConverter.convertADCMeasurementToTemperature(uInRoof) + RoofOffset
             uInTank = ADCHandler.readADCChannelSingle(adcdac,2)
-            tempTank = VoltageToTempConverter.convertADCMeasurementToTemperature(uInTank)
+            tempTank = VoltageToTempConverter.convertADCMeasurementToTemperature(uInTank) + TankOffset
             
             if tempRoof != VoltageToTempConverter.ERROR_RETURN_VALUE:
                 circularBufferRoof.enqueue(tempRoof)
